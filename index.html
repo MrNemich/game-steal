@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Паркур</title>
+    <title>Roblox 3D Паркур</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
 </head>
 <body>
     <div class="game-container">
         <header class="game-header">
-            <h1><i class="fas fa-gamepad"></i> Roblox Паркур</h1>
+            <h1><i class="fas fa-cube"></i> Roblox 3D Паркур</h1>
             <div class="game-info">
                 <div class="info-item">
                     <span class="info-label">Управление:</span>
@@ -25,11 +27,15 @@
                     <span class="info-label">Прыжок:</span>
                     <span class="info-value">ПРОБЕЛ</span>
                 </div>
+                <div class="info-item">
+                    <span class="info-label">Камера:</span>
+                    <span class="info-value">Mouse Drag</span>
+                </div>
             </div>
         </header>
         
         <div class="game-wrapper">
-            <canvas id="gameCanvas" width="1200" height="700"></canvas>
+            <div id="game3d"></div>
             
             <div class="stats-panel">
                 <h3><i class="fas fa-chart-line"></i> Статус игрока</h3>
@@ -42,22 +48,52 @@
                     <span id="actionValue" class="stat-value">Стоит</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Позиция:</span>
+                    <span class="stat-label">Позиция (X, Z):</span>
                     <span id="positionValue" class="stat-value">0, 0</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">На земле:</span>
-                    <span id="groundedValue" class="stat-value">Да</span>
+                    <span class="stat-label">Базы посещено:</span>
+                    <span id="basesValue" class="stat-value">0/6</span>
                 </div>
+                
+                <div class="bases-list">
+                    <h4><i class="fas fa-building"></i> Базы:</h4>
+                    <div class="base-item" data-base="1">
+                        <span class="base-name">База 1</span>
+                        <span class="base-status not-visited">Не посещена</span>
+                    </div>
+                    <div class="base-item" data-base="2">
+                        <span class="base-name">База 2</span>
+                        <span class="base-status not-visited">Не посещена</span>
+                    </div>
+                    <div class="base-item" data-base="3">
+                        <span class="base-name">База 3</span>
+                        <span class="base-status not-visited">Не посещена</span>
+                    </div>
+                    <div class="base-item" data-base="4">
+                        <span class="base-name">База 4</span>
+                        <span class="base-status not-visited">Не посещена</span>
+                    </div>
+                    <div class="base-item" data-base="5">
+                        <span class="base-name">База 5</span>
+                        <span class="base-status not-visited">Не посещена</span>
+                    </div>
+                    <div class="base-item" data-base="6">
+                        <span class="base-name">База 6</span>
+                        <span class="base-status not-visited">Не посещена</span>
+                    </div>
+                </div>
+                
                 <div class="instructions">
                     <h4><i class="fas fa-info-circle"></i> Цель игры:</h4>
-                    <p>Исследуйте карту, посетите все 6 баз и вернитесь на стартовую позицию!</p>
+                    <p>Посетите все 6 баз! Зайдите внутрь каждой базы через вход.</p>
                 </div>
             </div>
         </div>
         
         <div class="controls">
-            <button id="resetBtn" class="control-btn"><i class="fas fa-redo"></i> Сброс позиции</button>
+            <button id="resetBtn" class="control-btn"><i class="fas fa-redo"></i> Сброс игры</button>
+            <button id="cameraBtn" class="control-btn"><i class="fas fa-video"></i> Вид от 3-го лица</button>
             <button id="fullscreenBtn" class="control-btn"><i class="fas fa-expand"></i> Полный экран</button>
             <div class="volume-control">
                 <i class="fas fa-volume-up"></i>
@@ -66,7 +102,7 @@
         </div>
         
         <footer class="game-footer">
-            <p>Используйте клавиши WASD или стрелки для движения. SHIFT для бега. ПРОБЕЛ для прыжка.</p>
+            <p>Перемещайтесь по 3D миру! WASD/стрелки для движения, SHIFT для бега, ПРОБЕЛ для прыжка, вращайте камеру мышью.</p>
         </footer>
     </div>
 
@@ -75,6 +111,9 @@
     </audio>
     <audio id="jumpSound">
         <source src="https://assets.mixkit.co/sfx/preview/mixkit-jump-arcade-game-166.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="collectSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
     </audio>
 
     <script src="script.js"></script>
