@@ -6,21 +6,22 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
     color: #fff;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    overflow-x: hidden;
 }
 
 .game-container {
     width: 100%;
-    max-width: 1400px;
-    background: rgba(25, 25, 40, 0.9);
+    max-width: 1600px;
+    background: rgba(15, 15, 30, 0.95);
     border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
     overflow: hidden;
     border: 1px solid #2a2a4a;
 }
@@ -30,14 +31,30 @@ body {
     padding: 20px 30px;
     text-align: center;
     border-bottom: 3px solid #ff4757;
+    position: relative;
+    overflow: hidden;
+}
+
+.game-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+    background-size: cover;
+    opacity: 0.2;
 }
 
 .game-header h1 {
     font-family: 'Orbitron', sans-serif;
     font-size: 2.8rem;
     margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
     letter-spacing: 1px;
+    position: relative;
+    z-index: 1;
 }
 
 .game-info {
@@ -46,15 +63,18 @@ body {
     flex-wrap: wrap;
     gap: 20px;
     margin-top: 15px;
+    position: relative;
+    z-index: 1;
 }
 
 .info-item {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
     padding: 8px 15px;
     border-radius: 10px;
     display: flex;
     align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
 }
 
 .info-label {
@@ -65,7 +85,7 @@ body {
 
 .info-value {
     font-family: 'Orbitron', sans-serif;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     padding: 3px 8px;
     border-radius: 5px;
     border: 1px solid #4169e1;
@@ -75,23 +95,27 @@ body {
     display: flex;
     padding: 20px;
     gap: 20px;
+    min-height: 700px;
 }
 
-#gameCanvas {
-    background: #0f3460;
+#game3d {
+    flex: 1;
     border-radius: 10px;
     border: 3px solid #2a2a4a;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
-    flex: 1;
+    box-shadow: 0 0 30px rgba(65, 105, 225, 0.3);
+    overflow: hidden;
+    background: #0a0a15;
+    position: relative;
 }
 
 .stats-panel {
-    background: rgba(30, 30, 50, 0.9);
-    width: 300px;
+    background: rgba(25, 25, 45, 0.9);
+    width: 350px;
     border-radius: 10px;
     padding: 20px;
     border: 2px solid #4169e1;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
 }
 
 .stats-panel h3 {
@@ -101,6 +125,7 @@ body {
     padding-bottom: 10px;
     border-bottom: 2px solid #4169e1;
     text-align: center;
+    font-size: 1.4rem;
 }
 
 .stat {
@@ -113,6 +138,7 @@ body {
 
 .stat-label {
     color: #a9a9ff;
+    font-size: 0.95rem;
 }
 
 .stat-value {
@@ -123,12 +149,64 @@ body {
     min-width: 80px;
     text-align: center;
     border: 1px solid #8a2be2;
+    font-size: 0.9rem;
+}
+
+.bases-list {
+    margin-top: 25px;
+    margin-bottom: 20px;
+}
+
+.bases-list h4 {
+    color: #ffdd59;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(65, 105, 225, 0.5);
+}
+
+.base-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: rgba(30, 30, 60, 0.5);
+    border-radius: 6px;
+    border-left: 4px solid #4169e1;
+    transition: all 0.3s;
+}
+
+.base-item.visited {
+    border-left-color: #2ed573;
+    background: rgba(46, 213, 115, 0.1);
+}
+
+.base-name {
+    font-weight: 600;
+    color: #ddd;
+}
+
+.base-status {
+    font-size: 0.85rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.not-visited {
+    background: rgba(255, 71, 87, 0.2);
+    color: #ff6b81;
+}
+
+.visited {
+    background: rgba(46, 213, 115, 0.2);
+    color: #2ed573;
 }
 
 .instructions {
     margin-top: 25px;
     padding: 15px;
-    background: rgba(65, 105, 225, 0.2);
+    background: rgba(65, 105, 225, 0.15);
     border-radius: 8px;
     border-left: 4px solid #ff4757;
 }
@@ -150,8 +228,9 @@ body {
     align-items: center;
     padding: 20px;
     gap: 20px;
-    background: rgba(20, 20, 35, 0.8);
+    background: rgba(15, 15, 30, 0.9);
     border-top: 2px solid #2a2a4a;
+    flex-wrap: wrap;
 }
 
 .control-btn {
@@ -175,10 +254,16 @@ body {
 .control-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(65, 105, 225, 0.6);
+    background: linear-gradient(90deg, #4a75f0 0%, #9a3cf2 100%);
 }
 
 .control-btn:active {
     transform: translateY(1px);
+}
+
+.control-btn.active {
+    background: linear-gradient(90deg, #ff4757 0%, #ff6b81 100%);
+    box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
 }
 
 .volume-control {
@@ -223,18 +308,26 @@ body {
     border-top: 1px solid #2a2a4a;
 }
 
+/* 3D Canvas стили */
+canvas {
+    display: block;
+    outline: none;
+}
+
 /* Адаптивность */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .game-wrapper {
         flex-direction: column;
     }
     
     .stats-panel {
         width: 100%;
+        order: -1;
+        margin-bottom: 20px;
     }
     
-    #gameCanvas {
-        width: 100%;
+    #game3d {
+        min-height: 600px;
     }
 }
 
@@ -255,4 +348,43 @@ body {
     .game-wrapper {
         padding: 10px;
     }
+    
+    body {
+        padding: 10px;
+    }
+}
+
+/* Эффекты для 3D */
+.floating {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Индикатор коллизии */
+.collision-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 71, 87, 0.8);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: none;
+    z-index: 100;
+    animation: pulse 1s infinite;
 }
