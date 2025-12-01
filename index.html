@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/stats.min.js"></script>
 </head>
 <body>
     <div id="gameContainer">
@@ -52,7 +53,7 @@
                 </div>
             </div>
             <div class="inventory-info">
-                ЛКМ: Разрушить блок | ПКМ: Поставить блок
+                ЛКМ: Разрушить блок | ПКМ: Поставить блок | E: Открыть/Закрыть инвентарь
             </div>
         </div>
 
@@ -65,9 +66,10 @@
                 <p>WASD - Движение</p>
                 <p>Пробел - Прыжок</p>
                 <p>Shift - Бег</p>
-                <p>1-9 - Смена блоков</p>
-                <p>E - Открыть инвентарь</p>
-                <p>ESC - Выход из режима игры</p>
+                <p>1-3 - Смена блоков</p>
+                <p>E - Инвентарь</p>
+                <p>ESC - Выход из игры</p>
+                <p style="color: #4CAF50; margin-top: 10px;">Нажмите НАЧАТЬ ИГРУ и затем кликните по экрану</p>
             </div>
         </div>
 
@@ -76,6 +78,7 @@
             <div>Выбран: <span id="selectedBlock">Трава</span></div>
             <div>Координаты: <span id="coords">0, 0, 0</span></div>
             <div>Блоков: <span id="blockCount">0</span></div>
+            <div>FPS: <span id="fpsCounter">0</span></div>
         </div>
     </div>
 
