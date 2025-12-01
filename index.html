@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Паркур</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1><i class="fas fa-gamepad"></i> Roblox Паркур</h1>
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="info-label">Управление:</span>
+                    <span class="info-value">WASD / Стрелки</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Бег:</span>
+                    <span class="info-value">SHIFT</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Прыжок:</span>
+                    <span class="info-value">ПРОБЕЛ</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="game-wrapper">
+            <canvas id="gameCanvas" width="1200" height="700"></canvas>
+            
+            <div class="stats-panel">
+                <h3><i class="fas fa-chart-line"></i> Статус игрока</h3>
+                <div class="stat">
+                    <span class="stat-label">Скорость:</span>
+                    <span id="speedValue" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Действие:</span>
+                    <span id="actionValue" class="stat-value">Стоит</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Позиция:</span>
+                    <span id="positionValue" class="stat-value">0, 0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">На земле:</span>
+                    <span id="groundedValue" class="stat-value">Да</span>
+                </div>
+                <div class="instructions">
+                    <h4><i class="fas fa-info-circle"></i> Цель игры:</h4>
+                    <p>Исследуйте карту, посетите все 6 баз и вернитесь на стартовую позицию!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="resetBtn" class="control-btn"><i class="fas fa-redo"></i> Сброс позиции</button>
+            <button id="fullscreenBtn" class="control-btn"><i class="fas fa-expand"></i> Полный экран</button>
+            <div class="volume-control">
+                <i class="fas fa-volume-up"></i>
+                <input type="range" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+        </div>
+        
+        <footer class="game-footer">
+            <p>Используйте клавиши WASD или стрелки для движения. SHIFT для бега. ПРОБЕЛ для прыжка.</p>
+        </footer>
+    </div>
+
+    <audio id="backgroundMusic" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="jumpSound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-jump-arcade-game-166.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
