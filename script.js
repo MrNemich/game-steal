@@ -18,13 +18,19 @@ class MinecraftGame {
         this.direction = new THREE.Vector3();
         this.canJump = true;
         this.moveSpeed = 5;
-        this.jumpHeight = 7;
-        this.gravity = 15;
+        this.jumpHeight = 8;
+        this.gravity = 25;
+        this.isOnGround = false;
         this.blockCount = 0;
         this.gameStarted = false;
+        this.isLocked = false;
+        this.clock = new THREE.Clock();
+        this.previousTime = 0;
+        this.fps = 0;
+        this.fpsUpdateTime = 0;
 
         this.init();
-        this.createWorld();
+        this.createGrassPlatform();
         this.setupEventListeners();
         this.animate();
     }
@@ -32,17 +38,28 @@ class MinecraftGame {
     init() {
         // Сцена
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.Fog(0x87CEEB, 50, 1000);
+        this.scene.fog = new THREE.Fog(0x87CEEB, 100, 500);
 
-        // Камера
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 10, 0);
+        // Камера (FPS камера)
+        this.camera = new THREE.PerspectiveCamera(
+            75, 
+            window.innerWidth / window.innerHeight, 
+            0.1, 
+            1000
+        );
+        this.camera.position.set(0, 15, 0);
 
         // Рендерер
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: false
+        });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1;
         document.getElementById('gameContainer').appendChild(this.renderer.domElement);
 
         // Освещение
@@ -50,14 +67,20 @@ class MinecraftGame {
         this.scene.add(ambientLight);
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(50, 50, 50);
+        directionalLight.position.set(100, 100, 50);
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 500;
+        directionalLight.shadow.camera.left = -100;
+        directionalLight.shadow.camera.right = 100;
+        directionalLight.shadow.camera.top = 100;
+        directionalLight.shadow.camera.bottom = -100;
         this.scene.add(directionalLight);
 
         // Небо
-        const skyGeometry = new THREE.SphereGeometry(500, 60, 40);
+        const skyGeometry = new THREE.SphereGeometry(1000, 32, 32);
         const skyMaterial = new THREE.MeshBasicMaterial({
             color: 0x87CEEB,
             side: THREE.BackSide
@@ -65,23 +88,68 @@ class MinecraftGame {
         const sky = new THREE.Mesh(skyGeometry, skyMaterial);
         this.scene.add(sky);
 
-        // Пол
-        const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x7CFC00 });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        this.scene.add(ground);
+        // Солнце
+        const sunGeometry = new THREE.SphereGeometry(20, 32, 32);
+        const sunMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffff00,
+            transparent: true,
+            opacity: 0.8
+        });
+        this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        this.sun.position.set(200, 150, 100);
+        this.scene.add(this.sun);
     }
 
-    createWorld() {
-        // Создаем начальные блоки
-        for (let x = -10; x <= 10; x += 2) {
-            for (let z = -10; z <= 10; z += 2) {
-                const height = Math.floor(Math.random() * 3) + 1;
-                for (let y = 0; y < height; y++) {
-                    const blockType = y === height - 1 ? 0 : (y === 0 ? 1 : 2);
-                    this.addBlock(x, y, z, blockType);
+    createGrassPlatform() {
+        // Создаем большую травяную платформу для старта
+        const platformSize = 30;
+        const geometry = new THREE.PlaneGeometry(platformSize, platformSize);
+        const material = new THREE.MeshLambertMaterial({ 
+            color: 0x7CFC00,
+            side: THREE.DoubleSide
+        });
+        const platform = new THREE.Mesh(geometry, material);
+        platform.rotation.x = -Math.PI / 2;
+        platform.position.y = -0.5;
+        platform.receiveShadow = true;
+        this.scene.add(platform);
+
+        // Добавляем травяные блоки на платформе
+        for (let x = -10; x <= 10; x++) {
+            for (let z = -10; z <= 10; z++) {
+                // Случайные высоты для реалистичности
+                if (Math.random() > 0.7) {
+                    const height = Math.floor(Math.random() * 4) + 1;
+                    for (let y = 0; y < height; y++) {
+                        const blockType = y === height - 1 ? 0 : (y === 0 ? 1 : 2);
+                        this.addBlock(x, y, z, blockType);
+                    }
+                } else if (Math.random() > 0.5) {
+                    // Добавляем единичные блоки травы
+                    this.addBlock(x, 0, z, 0);
+                }
+            }
+        }
+
+        // Добавляем деревья
+        this.addTree(-5, 0, -5);
+        this.addTree(5, 0, 5);
+        this.addTree(-8, 0, 8);
+    }
+
+    addTree(x, y, z) {
+        // Ствол дерева (земля)
+        for (let i = 0; i < 4; i++) {
+            this.addBlock(x, y + i, z, 1);
+        }
+        
+        // Листва (трава)
+        for (let dx = -2; dx <= 2; dx++) {
+            for (let dz = -2; dz <= 2; dz++) {
+                for (let dy = 3; dy <= 5; dy++) {
+                    if (Math.abs(dx) + Math.abs(dz) + Math.abs(dy - 4) <= 3) {
+                        this.addBlock(x + dx, y + dy, z + dz, 0);
+                    }
                 }
             }
         }
@@ -97,7 +165,10 @@ class MinecraftGame {
         block.position.set(x, y, z);
         block.castShadow = true;
         block.receiveShadow = true;
-        block.userData = { type: type };
+        block.userData = { 
+            type: type,
+            health: 100 
+        };
         
         this.scene.add(block);
         this.blocks.push(block);
@@ -126,47 +197,77 @@ class MinecraftGame {
         return null;
     }
 
-    updateControls() {
-        if (!this.controls) return;
+    updatePhysics(deltaTime) {
+        if (!this.gameStarted || !this.isLocked) return;
 
-        const time = performance.now() * 0.001;
-        const delta = Math.min(0.05, time - this.lastTime || 0);
-        this.lastTime = time;
-
-        this.velocity.x -= this.velocity.x * 10.0 * delta;
-        this.velocity.z -= this.velocity.z * 10.0 * delta;
-        this.velocity.y -= this.gravity * delta;
-
-        this.direction.z = Number(this.keys['KeyW']) - Number(this.keys['KeyS']);
-        this.direction.x = Number(this.keys['KeyD']) - Number(this.keys['KeyA']);
-        this.direction.normalize();
-
-        if (this.keys['Space'] && this.canJump) {
-            this.velocity.y = this.jumpHeight;
-            this.canJump = false;
+        // Гравитация
+        if (!this.isOnGround) {
+            this.velocity.y -= this.gravity * deltaTime;
         }
 
-        const speed = this.keys['ShiftLeft'] ? this.moveSpeed * 2 : this.moveSpeed;
-        
-        if (this.keys['KeyW']) this.velocity.z -= speed * delta;
-        if (this.keys['KeyS']) this.velocity.z += speed * delta;
-        if (this.keys['KeyA']) this.velocity.x -= speed * delta;
-        if (this.keys['KeyD']) this.velocity.x += speed * delta;
+        // Движение вперед/назад
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) {
+            this.velocity.z = -this.moveSpeed;
+        } else if (this.keys['KeyS'] || this.keys['ArrowDown']) {
+            this.velocity.z = this.moveSpeed;
+        } else {
+            this.velocity.z = 0;
+        }
 
-        this.controls.moveRight(-this.velocity.x * delta);
-        this.controls.moveForward(-this.velocity.z * delta);
+        // Движение влево/вправо
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
+            this.velocity.x = -this.moveSpeed;
+        } else if (this.keys['KeyD'] || this.keys['ArrowRight']) {
+            this.velocity.x = this.moveSpeed;
+        } else {
+            this.velocity.x = 0;
+        }
 
-        this.camera.position.y += this.velocity.y * delta;
+        // Бег
+        if (this.keys['ShiftLeft'] || this.keys['ShiftRight']) {
+            this.velocity.x *= 1.8;
+            this.velocity.z *= 1.8;
+        }
 
-        if (this.camera.position.y < 10) {
+        // Прыжок
+        if ((this.keys['Space'] || this.keys['Spacebar']) && this.isOnGround) {
+            this.velocity.y = this.jumpHeight;
+            this.isOnGround = false;
+        }
+
+        // Обновление позиции камеры
+        const moveVector = new THREE.Vector3(
+            this.velocity.x * deltaTime,
+            this.velocity.y * deltaTime,
+            this.velocity.z * deltaTime
+        );
+
+        // Преобразуем движение в локальные координаты камеры
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        cameraDirection.y = 0;
+        cameraDirection.normalize();
+
+        const cameraRight = new THREE.Vector3();
+        cameraRight.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0)).normalize();
+
+        const forwardMove = cameraDirection.clone().multiplyScalar(moveVector.z);
+        const rightMove = cameraRight.clone().multiplyScalar(moveVector.x);
+
+        this.camera.position.add(forwardMove);
+        this.camera.position.add(rightMove);
+        this.camera.position.y += moveVector.y;
+
+        // Проверка столкновения с землей
+        if (this.camera.position.y < 1.8) {
+            this.camera.position.y = 1.8;
             this.velocity.y = 0;
-            this.camera.position.y = 10;
-            this.canJump = true;
+            this.isOnGround = true;
         }
 
         // Обновляем координаты
         document.getElementById('coords').textContent = 
-            `${Math.floor(this.camera.position.x)}, ${Math.floor(this.camera.position.y)}, ${Math.floor(this.camera.position.z)}`;
+            `${Math.round(this.camera.position.x * 10) / 10}, ${Math.round(this.camera.position.y * 10) / 10}, ${Math.round(this.camera.position.z * 10) / 10}`;
     }
 
     setupEventListeners() {
@@ -175,10 +276,22 @@ class MinecraftGame {
             this.startGame();
         });
 
-        // Управление камерой
+        // Обработка блокировки указателя
+        document.addEventListener('pointerlockchange', () => this.onPointerLockChange());
+        document.addEventListener('mozpointerlockchange', () => this.onPointerLockChange());
+
+        // Клик по экрану для активации Pointer Lock
+        this.renderer.domElement.addEventListener('click', () => {
+            if (this.gameStarted && !this.isLocked) {
+                this.renderer.domElement.requestPointerLock();
+            }
+        });
+
+        // Управление клавиатурой
         document.addEventListener('keydown', (event) => {
             this.keys[event.code] = true;
             
+            // Смена блоков цифрами 1-3
             if (event.code.startsWith('Digit')) {
                 const num = parseInt(event.code[5]) - 1;
                 if (num >= 0 && num <= 2) {
@@ -186,11 +299,13 @@ class MinecraftGame {
                 }
             }
             
+            // Инвентарь
             if (event.code === 'KeyE') {
                 const inventory = document.getElementById('inventory');
                 inventory.style.display = inventory.style.display === 'none' ? 'block' : 'none';
             }
             
+            // Выход из игры
             if (event.code === 'Escape') {
                 this.exitGame();
             }
@@ -200,9 +315,9 @@ class MinecraftGame {
             this.keys[event.code] = false;
         });
 
-        // Клики для размещения/удаления блоков
-        this.renderer.domElement.addEventListener('click', (event) => {
-            if (!this.gameStarted) return;
+        // Клики для взаимодействия с блоками
+        this.renderer.domElement.addEventListener('mousedown', (event) => {
+            if (!this.gameStarted || !this.isLocked) return;
             
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -220,19 +335,27 @@ class MinecraftGame {
                     const normal = intersect.face.normal;
                     const newPos = intersect.object.position.clone().add(normal);
                     
+                    // Проверяем, нет ли блока на этой позиции
                     if (!this.getBlockAtPosition(newPos.x, newPos.y, newPos.z)) {
-                        this.addBlock(newPos.x, newPos.y, newPos.z, this.selectedBlockIndex);
+                        // Проверяем, чтобы блок не ставился внутри игрока
+                        const playerPos = this.camera.position.clone();
+                        playerPos.y -= 1; // Центр игрока примерно на уровне глаз
+                        const distance = playerPos.distanceTo(newPos);
+                        
+                        if (distance > 2) { // Минимальное расстояние для установки блока
+                            this.addBlock(newPos.x, newPos.y, newPos.z, this.selectedBlockIndex);
+                        }
                     }
                 }
             }
         });
 
-        // Контекстное меню
+        // Отключаем контекстное меню
         this.renderer.domElement.addEventListener('contextmenu', (event) => {
             event.preventDefault();
         });
 
-        // Слоты инвентаря
+        // Выбор блоков через инвентарь
         document.querySelectorAll('.slot').forEach(slot => {
             slot.addEventListener('click', (event) => {
                 const slotNum = parseInt(slot.dataset.slot);
@@ -248,6 +371,37 @@ class MinecraftGame {
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // Движение мыши для FPS камеры
+        document.addEventListener('mousemove', (event) => {
+            if (!this.gameStarted || !this.isLocked) return;
+
+            const movementX = event.movementX || event.mozMovementX || 0;
+            const movementY = event.movementY || event.mozMovementY || 0;
+
+            // Чувствительность мыши
+            const sensitivity = 0.002;
+
+            // Вращение камеры по горизонтали
+            this.camera.rotation.y -= movementX * sensitivity;
+
+            // Вращение камеры по вертикали с ограничениями
+            this.camera.rotation.x -= movementY * sensitivity;
+            this.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.camera.rotation.x));
+        });
+    }
+
+    onPointerLockChange() {
+        this.isLocked = document.pointerLockElement === this.renderer.domElement ||
+                       document.mozPointerLockElement === this.renderer.domElement;
+        
+        if (this.isLocked) {
+            document.body.classList.add('game-mode');
+            document.getElementById('crosshair').style.display = 'block';
+        } else {
+            document.body.classList.remove('game-mode');
+            document.getElementById('crosshair').style.display = 'none';
+        }
     }
 
     selectBlock(index) {
@@ -267,37 +421,83 @@ class MinecraftGame {
         this.gameStarted = true;
         document.getElementById('startScreen').style.display = 'none';
         
-        // Активируем PointerLockControls
-        this.controls = new THREE.PointerLockControls(this.camera, document.body);
-        this.scene.add(this.controls.getObject());
+        // Позиционируем игрока на платформе
+        this.camera.position.set(0, 15, 0);
         
-        // Запрашиваем блокировку указателя
-        document.body.requestPointerLock = document.body.requestPointerLock ||
-                                          document.body.mozRequestPointerLock;
-        document.body.requestPointerLock();
+        // Активируем Pointer Lock при клике
+        setTimeout(() => {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 24px;
+                background: rgba(0,0,0,0.7);
+                padding: 20px;
+                border-radius: 10px;
+                z-index: 3000;
+                text-align: center;
+            `;
+            message.textContent = 'КЛИКНИТЕ ПО ЭКРАНУ ДЛЯ НАЧАЛА ИГРЫ';
+            document.getElementById('gameContainer').appendChild(message);
+            
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }, 3000);
+        }, 500);
     }
 
     exitGame() {
         this.gameStarted = false;
+        this.isLocked = false;
         document.getElementById('startScreen').style.display = 'flex';
+        document.body.classList.remove('game-mode');
         
-        if (this.controls) {
-            this.scene.remove(this.controls.getObject());
-            this.controls = null;
+        if (document.exitPointerLock) {
+            document.exitPointerLock();
+        } else if (document.mozExitPointerLock) {
+            document.mozExitPointerLock();
         }
+    }
+
+    updateFPS() {
+        const currentTime = performance.now();
+        const deltaTime = currentTime - this.previousTime;
+        this.previousTime = currentTime;
         
-        document.exitPointerLock = document.exitPointerLock ||
-                                  document.mozExitPointerLock;
-        document.exitPointerLock();
+        this.fpsUpdateTime += deltaTime;
+        if (this.fpsUpdateTime > 500) { // Обновляем FPS раз в 500ms
+            this.fps = Math.round(1000 / deltaTime);
+            document.getElementById('fpsCounter').textContent = this.fps;
+            this.fpsUpdateTime = 0;
+        }
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        if (this.gameStarted && this.controls) {
-            this.updateControls();
+        // Обновляем FPS
+        this.updateFPS();
+        
+        // Получаем delta time
+        const deltaTime = this.clock.getDelta();
+        
+        // Обновляем физику если игра началась
+        if (this.gameStarted && this.isLocked) {
+            this.updatePhysics(deltaTime);
         }
         
+        // Анимация солнца
+        if (this.sun) {
+            this.sun.position.x = 200 * Math.cos(Date.now() * 0.0001);
+            this.sun.position.z = 200 * Math.sin(Date.now() * 0.0001);
+        }
+        
+        // Рендеринг
         this.renderer.render(this.scene, this.camera);
     }
 }
@@ -306,4 +506,10 @@ class MinecraftGame {
 let game;
 window.addEventListener('load', () => {
     game = new MinecraftGame();
+});
+
+// Обработка ошибок
+window.addEventListener('error', (error) => {
+    console.error('Game error:', error);
+    alert(`Ошибка игры: ${error.message}. Пожалуйста, обновите страницу.`);
 });
