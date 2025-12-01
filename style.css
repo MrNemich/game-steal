@@ -2,12 +2,14 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    user-select: none;
 }
 
 body {
     font-family: 'Arial', sans-serif;
     overflow: hidden;
     background: #000;
+    cursor: none;
 }
 
 #gameContainer {
@@ -23,11 +25,12 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000;
+    pointer-events: none;
 }
 
 .crosshair-line {
     position: absolute;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .crosshair-line.vertical {
@@ -50,56 +53,68 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.85);
     border: 2px solid #555;
     border-radius: 10px;
     padding: 15px;
     z-index: 1000;
     display: none;
     min-width: 500px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
 }
 
 .inventory-title {
     color: white;
     text-align: center;
-    font-size: 18px;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #555;
+    font-size: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #4CAF50;
+    font-weight: bold;
 }
 
 .hotbar {
     display: flex;
-    gap: 5px;
+    gap: 8px;
     justify-content: center;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .slot {
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid #777;
-    border-radius: 5px;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid #666;
+    border-radius: 8px;
     position: relative;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .slot:hover {
-    border-color: #aaa;
-    background: rgba(255, 255, 255, 0.2);
+    border-color: #888;
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
 }
 
 .slot.active {
     border-color: #4CAF50;
-    background: rgba(76, 175, 80, 0.2);
+    background: rgba(76, 175, 80, 0.25);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    transform: scale(1.05);
 }
 
 .block {
     width: 100%;
     height: 100%;
-    border-radius: 3px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .block.grass {
@@ -116,20 +131,23 @@ body {
 
 .slot-number {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
+    bottom: 3px;
+    right: 3px;
     color: white;
-    font-size: 12px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 3px;
-    padding: 0 3px;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: bold;
 }
 
 .inventory-info {
-    color: #aaa;
-    font-size: 12px;
+    color: #ccc;
+    font-size: 13px;
     text-align: center;
-    margin-top: 5px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #555;
 }
 
 /* Стартовый экран */
@@ -139,7 +157,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: linear-gradient(135deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 40, 80, 0.95) 100%);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -149,40 +167,58 @@ body {
 
 #startScreen h1 {
     color: #4CAF50;
-    font-size: 3em;
+    font-size: 3.5em;
     margin-bottom: 40px;
-    text-shadow: 0 0 10px #4CAF50;
+    text-shadow: 0 0 20px #4CAF50;
+    letter-spacing: 2px;
 }
 
 #startButton {
-    background: #4CAF50;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
     border: none;
-    padding: 15px 40px;
-    font-size: 1.5em;
-    border-radius: 10px;
+    padding: 20px 50px;
+    font-size: 1.8em;
+    border-radius: 15px;
     cursor: pointer;
-    transition: all 0.3s;
-    margin-bottom: 40px;
+    transition: all 0.3s ease;
+    margin-bottom: 50px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 #startButton:hover {
-    background: #45a049;
+    background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+    transform: scale(1.1);
+    box-shadow: 0 0 30px #4CAF50;
+}
+
+#startButton:active {
     transform: scale(1.05);
-    box-shadow: 0 0 20px #4CAF50;
 }
 
 .controls {
     color: white;
     background: rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 400px;
+    padding: 25px;
+    border-radius: 15px;
+    max-width: 500px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
 }
 
 .controls p {
-    margin: 5px 0;
-    padding: 2px 0;
+    margin: 8px 0;
+    padding: 5px 0;
+    font-size: 16px;
+}
+
+.controls strong {
+    color: #4CAF50;
+    font-size: 18px;
+    display: block;
+    margin-bottom: 15px;
 }
 
 /* Информация */
@@ -190,17 +226,25 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 15px;
     z-index: 1000;
     border: 1px solid #444;
+    backdrop-filter: blur(5px);
+    min-width: 200px;
 }
 
 #info div {
-    margin: 5px 0;
+    margin: 8px 0;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#info div:last-child {
+    border-bottom: none;
 }
 
 #selectedBlock {
@@ -210,8 +254,42 @@ body {
 
 #coords {
     color: #2196F3;
+    font-family: monospace;
 }
 
 #blockCount {
     color: #FF9800;
+    font-weight: bold;
+}
+
+#fpsCounter {
+    color: #9C27B0;
+    font-weight: bold;
+}
+
+/* Полноэкранный курсор для игрового режима */
+.game-mode #crosshair {
+    display: block;
+}
+
+.game-mode #startScreen {
+    display: none;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#startScreen h1, #startButton, .controls {
+    animation: fadeIn 0.8s ease-out;
+}
+
+#startButton {
+    animation-delay: 0.3s;
+}
+
+.controls {
+    animation-delay: 0.6s;
 }
